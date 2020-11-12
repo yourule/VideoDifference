@@ -3,6 +3,7 @@
 
 import UIKit
 import AVFoundation
+import CoreImage.CIFilterBuiltins
 
 protocol FrameExtractorDelegate: class {
     func captured(image: UIImage)
@@ -10,15 +11,20 @@ protocol FrameExtractorDelegate: class {
 
 class FrameExtractor: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate{
     
+    private var frameTeller = 0;
+    
     private let position = AVCaptureDevice.Position.front
     private let quality = AVCaptureSession.Preset.medium
     
     private var permissionGranted = false
     private let sessionQueue = DispatchQueue(label: "session queue")
     let captureSession = AVCaptureSession()
+    
     private let context = CIContext()
     
     var previewLayer: AVCaptureVideoPreviewLayer?
+    var imagePreviewView: UIImageView!
+    
     weak var delegate: FrameExtractorDelegate?
     
     override init() {
@@ -110,40 +116,78 @@ class FrameExtractor: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate{
     
     // MARK: Sample buffer to UIImage conversion
     private func imageFromSampleBuffer(sampleBuffer: CMSampleBuffer) -> UIImage? {
-        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
-            print("Error: No imageBuffer")
-            return nil
-        }
+        
+        guard let imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else { return nil }
+        
+        //print(imageBuffer)
+        
         let ciImage = CIImage(cvPixelBuffer: imageBuffer)
-        guard let cgImage = context.createCGImage(ciImage, from: ciImage.extent) else {
-            print("Error: No cgImage")
-            return nil
-        }
+        
+        let f = CIFilter.bicubicScaleTransform()
+        f.inputImage = ciImage
+        f.scale = 0.1
+        guard let scaledImage = f.outputImage else { return nil }
+        
+        print(scaledImage)
+        
+        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else { return nil }
+        
         return UIImage(cgImage: cgImage)
     }
     
     // MARK: AVCaptureVideoDataOutputSampleBufferDelegate
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-        print("Frame captured")
+        frameTeller += 1
+        print("Frame captured \(frameTeller)")
         
         guard let uiImage = imageFromSampleBuffer(sampleBuffer: sampleBuffer) else { return }
         DispatchQueue.main.async { [unowned self] in
             self.delegate?.captured(image: uiImage)
         }
-        
     }
     
     func displayPreview(on view: UIView) throws {
-        
+                
         let captureSession = self.captureSession
-        
         self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        self.previewLayer?.connection?.videoOrientation = .portrait
+        //self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        //self.previewLayer?.connection?.videoOrientation = .portrait
+        
+        view.layer.insertSublayer(self.previewLayer!, at: 0)
+        self.previewLayer?.frame = view.frame
+    }
+    
+    func displayAnotherPreview(on view: UIView) throws {
+                
+        let captureSession = self.captureSession
+        self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
+        //self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
+        //self.previewLayer?.connection?.videoOrientation = .portrait
         
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
     }
 }
-
+//extension UIImage {
+//    func crop(toPreviewLayer layer: AVCaptureVideoPreviewLayer, withRect rect: CGRect) -> UIImage {
+//        let outputRect = layer.metadataOutputRectConverted(fromLayerRect: rect)
+//        var cgImage = self.cgImage!
+//        let width = CGFloat(cgImage.width)
+//        let height = CGFloat(cgImage.height)
+//        let cropRect = CGRect(
+//            x: outputRect.origin.x * width,
+//            y: outputRect.origin.y * height,
+//            width: outputRect.size.width * width,
+//            height: outputRect.size.height * height)
+//
+//        cgImage = cgImage.cropping(to: cropRect)!
+//        let croppedUIImage = UIImage(
+//            cgImage: cgImage,
+//            scale: self.scale,
+//            orientation: self.imageOrientation
+//        )
+//
+//        return croppedUIImage
+//    }
+//}
