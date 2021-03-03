@@ -11,7 +11,7 @@ protocol FrameExtractorDelegate: class {
 
 class FrameExtractor: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate{
     
-    private var frameTeller = 0;
+    private var frameCounter = 0;
     
     private let position = AVCaptureDevice.Position.front
     private let quality = AVCaptureSession.Preset.medium
@@ -138,8 +138,8 @@ class FrameExtractor: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate{
     // MARK: AVCaptureVideoDataOutputSampleBufferDelegate
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         
-        frameTeller += 1
-        print("Frame captured \(frameTeller)")
+        frameCounter += 1
+        print("Frame captured \(frameCounter)")
         
         guard let uiImage = imageFromSampleBuffer(sampleBuffer: sampleBuffer) else { return }
         DispatchQueue.main.async { [unowned self] in
@@ -151,43 +151,8 @@ class FrameExtractor: NSObject, AVCaptureVideoDataOutputSampleBufferDelegate{
                 
         let captureSession = self.captureSession
         self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        //self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        //self.previewLayer?.connection?.videoOrientation = .portrait
-        
-        view.layer.insertSublayer(self.previewLayer!, at: 0)
-        self.previewLayer?.frame = view.frame
-    }
-    
-    func displayAnotherPreview(on view: UIView) throws {
-                
-        let captureSession = self.captureSession
-        self.previewLayer = AVCaptureVideoPreviewLayer(session: captureSession)
-        //self.previewLayer?.videoGravity = AVLayerVideoGravity.resizeAspectFill
-        //self.previewLayer?.connection?.videoOrientation = .portrait
         
         view.layer.insertSublayer(self.previewLayer!, at: 0)
         self.previewLayer?.frame = view.frame
     }
 }
-//extension UIImage {
-//    func crop(toPreviewLayer layer: AVCaptureVideoPreviewLayer, withRect rect: CGRect) -> UIImage {
-//        let outputRect = layer.metadataOutputRectConverted(fromLayerRect: rect)
-//        var cgImage = self.cgImage!
-//        let width = CGFloat(cgImage.width)
-//        let height = CGFloat(cgImage.height)
-//        let cropRect = CGRect(
-//            x: outputRect.origin.x * width,
-//            y: outputRect.origin.y * height,
-//            width: outputRect.size.width * width,
-//            height: outputRect.size.height * height)
-//
-//        cgImage = cgImage.cropping(to: cropRect)!
-//        let croppedUIImage = UIImage(
-//            cgImage: cgImage,
-//            scale: self.scale,
-//            orientation: self.imageOrientation
-//        )
-//
-//        return croppedUIImage
-//    }
-//}

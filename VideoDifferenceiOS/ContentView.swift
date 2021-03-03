@@ -21,6 +21,7 @@ struct ContentView: View {
                     //Video
                     ViewController()
                 }
+                
                 Text("Width: \(geometry.size.width) Height: \(geometry.size.height)")
             }
         }

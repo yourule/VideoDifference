@@ -1,5 +1,5 @@
 //
-//  CameraViewController.swift
+//  ViewController.swift
 //  SE Mockup
 //
 //  Created by Frans-Jan Wind on 02/08/2020.
@@ -13,7 +13,7 @@ final class ViewController: UIViewController, FrameExtractorDelegate {
     
     var frameExtractor: FrameExtractor!
     var previewView: UIView!
-    
+
     @IBOutlet weak var imageView: UIImageView!
     
 //    @IBAction func flipButton(_ sender: UIButton) {
@@ -26,10 +26,8 @@ final class ViewController: UIViewController, FrameExtractorDelegate {
         frameExtractor.delegate = self
         
         previewView = UIView(frame: CGRect(x:0, y:0, width: 320, height: 240))
-        
         previewView.contentMode = UIView.ContentMode.scaleAspectFit
         view.addSubview(previewView)
-        
         try? self.frameExtractor.displayPreview(on: self.previewView)
     }
     
